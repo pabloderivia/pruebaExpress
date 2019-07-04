@@ -1,7 +1,7 @@
 function loadMovies() {
   return [
     { id: 0, name: "Los Vengadores" },
-    { id: 1, name: "Lo que el viento se llevó" }
+    { id: 1, name: "Lo que el viento se llevó", like: true }
   ];
 }
 
@@ -15,11 +15,9 @@ var movies = loadMovies();
 router.get("/", (req, res) => {
   res.json(movies);
 });
-
-router.get("/:id", (req, res) => {
-  const id = req.params.id;
-  const movie = movies.find(movie => movie.id == id);
-  res.send(movie);
+router.get("/liked", (req, res) => {
+  const movieLiked = movies.find(movie => movie.like == true);
+  res.send(movieLiked);
 });
 
 router.post("/newMovie", (req, res) => {
@@ -60,6 +58,20 @@ router.delete("/:id", (req, res) => {
   movies.slice(movieIndex, 1);
   _.remove(movies, movie);
   res.json({ message: "OK" });
+});
+
+router.put("/like/:id", (req, res) => {
+  const id = req.params.id;
+  const movieIndex = movies.findIndex(movie => movie.id == id);
+  movies[movieIndex].like = true;
+  res.json({ mensaje: "likeado" });
+});
+
+router.put("/unlike/:id", (req, res) => {
+  const id = req.params.id;
+  const movieIndex = movies.findIndex(movie => movie.id == id);
+  movies[movieIndex].like = false;
+  res.json({ mensaje: "la peli te recuerda a tu ex. ¿Eh?" });
 });
 
 module.exports = router;

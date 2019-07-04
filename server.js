@@ -1,7 +1,7 @@
 const express = require("express"); //importamos el framework Express
 const app = express();
 
-const moviesRouter = require("./api/movies/movies");
+const moviesRouter = require("./api/movies/routes");
 
 app.use(express.json());
 app.use("/movies", moviesRouter); //cuando el usuario acceda a un endpoint con /movies/'algomás', llamará al router
