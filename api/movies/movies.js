@@ -1,65 +1,106 @@
-function loadMovies() {
-  return [
-    { id: 0, name: "Los Vengadores" },
-    { id: 1, name: "Lo que el viento se llevó" }
-  ];
-}
-
-const bodyIsEmpty = reqBody => {
-  if (req.body === undefined) return true;
-};
-var express = require("express");
-var router = express.Router();
-var movies = loadMovies();
+const express = require("express");
+const router = express.Router();
+const controller = require("./controllers/movieController");
 
 router.get("/", (req, res) => {
-  res.json(movies);
+    let movies = controller.getMovies();
+    res.json(movies);
+});
+
+router.get("/likes", (req, res) => {
+    let likedMovies = controller.getLikes();
+
+    if (likedMovies.length > 0) {
+        res.json(likedMovies);
+    } else {
+        res.status(200).send({
+            message: "Nobody has liked any movie yet. Try again in the future."
+        });
+    }
 });
 
 router.get("/:id", (req, res) => {
-  const id = req.params.id;
-  const movie = movies.find(movie => movie.id == id);
-  res.send(movie);
-});
+    let movieById = controller.getMovieById(req.params.id);
 
-router.post("/newMovie", (req, res) => {
-  const newMovie = req.body; //el contenido del 'mensaje' que enviaremos será la nueva peli
-  newMovie.id = Math.random(); //le metemos un nuevo id random
-  movies.push(newMovie); // añadimos el nuevo elemento al array
-  res.json({ message: "new movie added with no problems" }); //la response, lo qu envías
+    if (movieById !== undefined) {
+        res.json(movieById);
+    } else {
+        res.status(400).send({
+            message: `Sorry, there is no movie assigned to this id (${req.params.id}). Try another one.`
+        });
+    }
 });
 
 router.post("/", (req, res) => {
-  const newMovie = req.body;
-  newMovie.id = movies.length;
-  movies.push(newMovie);
-  res.json(newMovie);
+    let newMovie = controller.addMovie(req.body);
+
+    if (newMovie === false) {
+        res.status(400).send({
+            message: "Oops, an error has ocurred while adding new movie.",
+        });
+    } else {
+        res.json({
+            message: "New Movie added!",
+            newMovie
+        });
+    }
 });
 
-function safeMovie(movie) {
-  const result = movie;
-  delete result.id;
-  return result;
-}
-
 router.put("/:id", (req, res) => {
-  const id = req.params.id;
-  const newMovie = safeMovie(req.body);
+    let updatedMovie = controller.updateMovie(req.params.id, req.body);
 
-  const oldMovie = movies.find(movie => movie.id == id);
-  const position = movies.findIndex(movie => movie.id == id);
-
-  const movieToInsert = { ...oldMovie, ...newMovie, id: req.params.id };
-  movies[position] = movieToInsert;
-  res.json({ message: "todo ok" });
+    if (updatedMovie === false) {
+        res.status(400).send({
+            message: "Oops, an error has ocurred while updating movie.",
+        });
+    } else {
+        res.json({
+            message: `Movie ${req.params.id} has been updated!`,
+            updatedMovie
+        });
+    }
 });
 
 router.delete("/:id", (req, res) => {
-  const id = req.params.id;
-  const movieIndex = movies.findIndex(movie => movie.id == id);
-  movies.slice(movieIndex, 1);
-  _.remove(movies, movie);
-  res.json({ message: "OK" });
+    let movieIsDeleted = controller.deleteMovie(req.params.id);
+
+    if (movieIsDeleted === false) {
+        res.status(400).send({
+            message: "Sorry, the movie you're trying to delete does not exist."
+        });
+    } else {
+        res.status(200).send({
+            message: `Movie (id: ${req.params.id}) has been deleted!`,
+        });
+    }
+});
+
+router.put('/likes/:id', (req, res) => {
+    let result = controller.likeMovie(req.params.id);
+
+    if (result === false) {
+        res.status(400).send({
+            message: "Sorry, you cannot like a movie that does not exist."
+        });
+    } else {
+        res.status(200).send({
+            message: `Congrats!, you have liked movie ${req.params.id}).`
+        });
+    }
+});
+
+router.delete('/likes/:id', (req, res) => {
+    let result = controller.dislikeMovie(req.params.id);
+
+    if (result === false) {
+        res.status(400).send({
+            message: "Sorry, you cannot dislike a movie that does not exist."
+        });
+    } else {
+        res.status(200).send({
+            message: `You have disliked movie ${req.params.id}).`
+        });
+    }
 });
 
 module.exports = router;
